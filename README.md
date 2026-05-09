@@ -22,7 +22,7 @@ npx skills add xueyue/TxAnalyzer -a cursor
 
 After installation, ask your agent:
 
-> "Analyze attack transaction 0xYOUR_TX_HASH on bsc"
+> "Analyze attack transaction 0xYOUR_TX_HASH on <network>"
 
 The agent will follow the 6-phase methodology, Deep Dive, and post-Deep-Dive PoC/RPC replay workflow to pull artifacts, analyze root cause, and produce `transactions/<tx>/analysis/result.md`.
 
@@ -46,13 +46,14 @@ Tested on 18 real-world DeFi hack events from [DeFiHackLabs](https://github.com/
 ```bash
 source venv/bin/activate
 pip install -r requirements.txt
+python scripts/pull_artifacts.py --network eth --tx 0xYOUR_TX_HASH
 python scripts/pull_artifacts.py --network bsc --tx 0xYOUR_TX_HASH
 python scripts/pull_artifacts.py --network solana --tx YOUR_SOLANA_SIGNATURE
 ```
 
 After pulling artifacts, start a conversation in Cursor:
 
-> "Analyze this attack transaction 0xYOUR_TX_HASH on bsc"
+> "Analyze this attack transaction 0xYOUR_TX_HASH on <network>"
 
 The Agent will strictly follow the methodology to analyze and output `transactions/<tx>/analysis/result.md`, including the reverse-engineering / PoC / RPC replay sections.
 
@@ -63,21 +64,37 @@ Copy `config_template.json` to `config.json` and fill in your RPC/API keys:
 ```json
 {
   "networks": {
+    "eth": {
+      "name": "Ethereum Mainnet",
+      "type": "evm",
+      "chain_id": 1,
+      "rpc_url": "${ETH_RPC_URL}",
+      "rpc_url_trace": "${ETH_RPC_TRACE_URL}",
+      "etherscan_api_key": "${ETHERSCAN_API_KEY}",
+      "etherscan_base_url": "https://api.etherscan.io/api",
+      "anvil_port": 8546
+    },
     "bsc": {
-      "name": "BSC Mainnet",
-      "rpc_url": "https://bnb-mainnet.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY",
-      "etherscan_api_key": "YOUR_BSCSCAN_API_KEY",
-      "etherscan_base_url": "https://api.etherscan.io/v2/api",
-      "chain_id": 56
+      "name": "BNB Smart Chain",
+      "type": "evm",
+      "chain_id": 56,
+      "rpc_url": "${BSC_RPC_URL}",
+      "rpc_url_trace": "${BSC_RPC_TRACE_URL}",
+      "etherscan_api_key": "${BSCSCAN_API_KEY}",
+      "etherscan_base_url": "https://api.bscscan.com/api",
+      "anvil_port": 8547
     },
     "solana": {
       "name": "Solana Mainnet",
-      "rpc_url": "https://solana-mainnet.g.alchemy.com/v2/YOUR_ALCHEMY_API_KEY"
+      "type": "solana",
+      "rpc_url": "${SOLANA_RPC_URL}"
     }
   },
   "default_network": "bsc"
 }
 ```
+
+The full template includes `arb`, `base`, `op`, `polygon`, `avax`, `fantom`, `sepolia`, and `polygon_amoy`. `${ENV_VAR}` placeholders are resolved from the shell at runtime.
 
 ## Project Structure
 
@@ -100,6 +117,7 @@ TxAnalyzer/
 ├── scripts/               # CLI entry scripts
 │   ├── pull_artifacts.py  # Pull transaction artifacts
 │   ├── pull_solana_artifacts.py
+│   ├── anvil_fork.py      # Network-aware anvil tx-prestate launcher
 │   ├── backfill_opcodes.py
 │   ├── cleanup.py         # Clean up transaction artifacts
 │   └── decompile.py       # Contract decompilation
@@ -116,13 +134,14 @@ TxAnalyzer/
 ### Pull Transaction Artifacts
 
 ```bash
+python scripts/pull_artifacts.py --network eth --tx 0x...
 python scripts/pull_artifacts.py --network bsc --tx 0x...
 python scripts/pull_artifacts.py --network solana --tx <SOLANA_SIGNATURE>
 ```
 
 Common parameters:
 - `--tx`: Required, transaction hash
-- `--network`: Optional, defaults to `bsc`; use `solana` for Solana signatures
+- `--network`: Optional, defaults to `bsc`; supported EVM networks include `eth`, `bsc`, `arb`, `base`, `op`, `polygon`, `avax`, `fantom`; use `solana` for Solana signatures
 - `--timeout`: Optional, defaults to `120`
 - `--skip-opcode`: Skip `debug_traceTransaction` for EVM; Solana has no opcode trace via standard RPC
 - `--reuse-log`: Reuse existing EVM log file
@@ -185,7 +204,7 @@ cp config_template.json config.json
 claude
 
 # 3. Ask Claude to analyze a transaction
-> Analyze attack transaction 0xYOUR_TX_HASH on bsc
+> Analyze attack transaction 0xYOUR_TX_HASH on <network>
 ```
 
 Claude will automatically activate the virtual environment, pull artifacts, read the methodology, and produce an audit-grade report at `transactions/<tx>/analysis/result.md`, including Deep Root Cause, attacker-contract PoC, attack-block RPC replay, and risk upper bound evaluation.

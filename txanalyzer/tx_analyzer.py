@@ -10,13 +10,27 @@ from pathlib import Path
 from web3 import Web3
 from .heimdall_api import decompile
 
+
+def _resolve_env_placeholders(value):
+    if isinstance(value, str):
+        match = re.fullmatch(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}", value)
+        if match:
+            return os.environ.get(match.group(1), "")
+        return re.sub(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}", lambda m: os.environ.get(m.group(1), ""), value)
+    if isinstance(value, dict):
+        return {k: _resolve_env_placeholders(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_resolve_env_placeholders(v) for v in value]
+    return value
+
+
 class TransactionTraceAnalyzer:
     def __init__(self, network: str = None, config_file: str = "config.json", *, log_dir: str = "log", cache_dir: str = "log"):
         """
         Initialize the transaction trace analyzer.
         
         Args:
-            network: Network name (currently recommended: 'bsc' only). Uses default from config if None.
+            network: Network name from config.json. Uses default from config if None.
             config_file: Path to configuration file.
             log_dir: Output directory for this run's artifacts (trace/calls/contracts/report/sources, etc.).
             cache_dir: Shared cache directory (function signature cache, etc.); decoupled from log_dir to avoid per-tx duplication.
@@ -142,7 +156,7 @@ class TransactionTraceAnalyzer:
         """Load configuration file"""
         try:
             with open(config_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                return _resolve_env_placeholders(json.load(f))
         except FileNotFoundError:
             raise FileNotFoundError(f"Config file {config_file} not found")
         except json.JSONDecodeError:
@@ -1734,15 +1748,14 @@ Ensure code readability and professionalism while preserving the original functi
 
 # Usage example
 if __name__ == "__main__":
-    # Initialize analyzer - using Base network (default)
+    # Initialize analyzer using default_network from config.json
     # analyzer = TransactionTraceAnalyzer()
-    
-    # Or explicitly specify network
-    analyzer = TransactionTraceAnalyzer(network='bsc')    # Use BSC network
-    # analyzer = TransactionTraceAnalyzer(network='bsc')  # Recommended: use BSC only
-    
+
+    # Or explicitly specify any configured network
+    analyzer = TransactionTraceAnalyzer(network='bsc')
+
     # Can also switch network at runtime
-    # analyzer.switch_network('ethereum')  # Switch to Ethereum network
+    # analyzer.switch_network('eth')
     
     # Decompilation control (enabled by default)
     # analyzer.enable_decompile(True)   # Enable decompilation

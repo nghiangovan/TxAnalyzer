@@ -31,6 +31,8 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import os
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -46,9 +48,22 @@ BPF_LOADER_DEPRECATED = "BPFLoader2111111111111111111111111111111111"
 BPF_LOADER_UPGRADEABLE = "BPFLoaderUpgradeab1e11111111111111111111111"
 
 
+def _resolve_env_placeholders(value: Any) -> Any:
+    if isinstance(value, str):
+        match = re.fullmatch(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}", value)
+        if match:
+            return os.environ.get(match.group(1), "")
+        return re.sub(r"\$\{([A-Za-z_][A-Za-z0-9_]*)\}", lambda m: os.environ.get(m.group(1), ""), value)
+    if isinstance(value, dict):
+        return {k: _resolve_env_placeholders(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_resolve_env_placeholders(v) for v in value]
+    return value
+
+
 def _load_config(config_path: Path) -> Dict[str, Any]:
     with config_path.open("r", encoding="utf-8") as f:
-        return json.load(f)
+        return _resolve_env_placeholders(json.load(f))
 
 
 def _write_json(path: Path, obj: Any) -> None:

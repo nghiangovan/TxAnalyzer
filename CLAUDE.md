@@ -12,7 +12,7 @@ post-deep-dive reverse-engineering / PoC / Foundry fork replay / risk upper boun
 - **Pull artifacts**: `python scripts/pull_artifacts.py --network <NET> --tx <TX>`
 - **Config**: copy `config_template.json` → `config.json`, fill in API keys
 - **Methodology docs**: 4 pre-analysis docs (`METHODOLOGY`/`SPEC`/`MODULES`/`DEEP_DIVE`) + 3 post-analysis docs (`POC_REPLAY`/`FORK_HARNESS`/`RISK_BOUND`) under `docs/` — all mandatory
-- **Replay tooling**: Foundry (`forge`/`anvil`/`cast`) + `BSC_RPC_URL` in env
+- **Replay tooling**: Foundry (`forge`/`anvil`/`cast`) + target network RPC env var (`ETH_RPC_URL`, `BSC_RPC_URL`, etc.)
 - **Output**: `transactions/<tx>/analysis/result.md` (Phase 1–6 + Deep Root Cause + PoC + RPC Replay + Risk Upper Bound + Confidence)
 
 Notes:

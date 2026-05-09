@@ -31,9 +31,9 @@ pip install -r ${CLAUDE_SKILL_DIR}/requirements.txt
 
 4. **Foundry** (required for Fork Harness + Risk Upper Bound stages): `forge`, `anvil`, `cast` must be on `$PATH`. Install via `curl -L https://foundry.paradigm.xyz | bash && foundryup`.
 
-5. **Shell env** (required for Fork Harness): `BSC_RPC_URL` (and equivalents for other networks, e.g. `ETH_RPC_URL`) must be exported before running `anvil --fork-url "$BSC_RPC_URL" ...` and `forge test`. Value should match the RPC URL in `config.json`.
+5. **Shell env** (required for Fork Harness): export the RPC env var for the target EVM network (for example `ETH_RPC_URL`, `BSC_RPC_URL`, `ARB_RPC_URL`, `BASE_RPC_URL`). Values should match `config.json`; `${ENV_VAR}` placeholders in config are resolved at runtime.
 
-Supported networks: `bsc` (default), `eth`, `sepolia`, `polygon_amoy`, `solana`.
+Supported networks: `bsc` (default), `eth`, `arb`, `base`, `op`, `polygon`, `avax`, `fantom`, `sepolia`, `polygon_amoy`, `solana`.
 
 ## Core Commands
 
@@ -55,12 +55,8 @@ Notes:
 Used by the Fork Harness and Risk Upper Bound stages. Full recipe lives in `docs/ATTACK_TX_ANALYSIS_FORK_HARNESS.md`.
 
 ```bash
-# 1. Pin a local node to the exact tx prestate (do NOT use vm.createSelectFork(txHash) against BSC remote; see FORK_HARNESS.md)
-anvil \
-  --fork-url "$BSC_RPC_URL" \
-  --fork-transaction-hash <TX_HASH> \
-  --port 8546 \
-  --timeout 120000 --retries 20 --fork-retry-backoff 1000 --no-rate-limit
+# 1. Pin a local node to the exact tx prestate (do NOT use vm.createSelectFork(txHash) against a remote RPC; see FORK_HARNESS.md)
+python ${CLAUDE_SKILL_DIR}/scripts/anvil_fork.py --network <NET> --tx <TX_HASH>
 
 # 2. Run the full replay + risk bound test suite
 forge test -vv
@@ -361,5 +357,5 @@ Any missing required stage must be explicitly labeled `blocked` (and why) instea
 | [Heimdall-rs](https://github.com/Jon-Becker/heimdall-rs/) | EVM bytecode decompilation | Local binary ~/.bifrost/bin/heimdall |
 | OpenAI API | LLM-optimized decompiled code (optional) | OPENAI_API_KEY + OPENAI_API_BASE env vars |
 | [Foundry `forge`](https://book.getfoundry.sh/) | Compile + run `.t.sol` replay and risk-bound tests | None; binary on $PATH |
-| [Foundry `anvil`](https://book.getfoundry.sh/anvil/) | Local tx-prestate fork via `--fork-transaction-hash` | Upstream RPC URL in `$BSC_RPC_URL` (or equivalent) |
+| [Foundry `anvil`](https://book.getfoundry.sh/anvil/) | Local tx-prestate fork via `scripts/anvil_fork.py --network <NET> --tx <TX>` | Target network RPC env var from config (`ETH_RPC_URL`, `BSC_RPC_URL`, etc.) |
 | [Foundry `cast`](https://book.getfoundry.sh/cast/) | On-fork sanity probes (`chain-id`, `block-number`, `tx`, `storage`) | Same RPC URL as anvil |

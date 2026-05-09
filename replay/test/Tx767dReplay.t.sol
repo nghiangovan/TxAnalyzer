@@ -12,6 +12,7 @@ interface Vm {
     function expectRevert() external;
     function deal(address who, uint256 newBalance) external;
     function roll(uint256 newHeight) external;
+    function envString(string calldata key) external returns (string memory);
 }
 
 contract Tx767dReplayForkTest {
@@ -36,8 +37,12 @@ contract Tx767dReplayForkTest {
     uint256 internal constant PRESTATE_TAX_ACCUMULATIVE_SLIS = 13_184_608_901_399_920_684;
     uint256 internal constant PRESTATE_TOTAL_CLAIMED = 9_377_178_447_088_055_634;
 
+    function replayNetwork() internal returns (string memory) {
+        return vm.envString("REPLAY_NETWORK");
+    }
+
     function testReplayAttackFromParentBlockForkShowsSameBlockBlocker() public {
-        vm.createSelectFork("bsc", ATTACK_BLOCK - 1);
+        vm.createSelectFork(replayNetwork(), ATTACK_BLOCK - 1);
 
         Tx767dReplayLauncher replay = new Tx767dReplayLauncher();
         vm.expectRevert();
@@ -45,7 +50,7 @@ contract Tx767dReplayForkTest {
     }
 
     function testReplayAttackFromAttackBlockEndStateShowsMutatedStateBlocker() public {
-        vm.createSelectFork("bsc", ATTACK_BLOCK);
+        vm.createSelectFork(replayNetwork(), ATTACK_BLOCK);
 
         Tx767dReplayLauncher replay = new Tx767dReplayLauncher();
         vm.expectRevert();
@@ -53,7 +58,7 @@ contract Tx767dReplayForkTest {
     }
 
     function testSimulateCoreExploitOnParentBlock() public {
-        vm.createSelectFork("bsc", ATTACK_BLOCK - 1);
+        vm.createSelectFork(replayNetwork(), ATTACK_BLOCK - 1);
         vm.deal(address(this), 20 ether);
 
         uint256 vaultSlisBefore = IERC20Like(SLISBNB).balanceOf(VAULT);

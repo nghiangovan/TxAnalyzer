@@ -60,7 +60,14 @@ optimizer = true
 optimizer_runs = 200
 
 [rpc_endpoints]
+eth = "${ETH_RPC_URL}"
 bsc = "${BSC_RPC_URL}"
+arb = "${ARB_RPC_URL}"
+base = "${BASE_RPC_URL}"
+op = "${OP_RPC_URL}"
+polygon = "${POLYGON_RPC_URL}"
+avax = "${AVAX_RPC_URL}"
+fantom = "${FTM_RPC_URL}"
 ```
 
 Change `evm_version` only if the target chain/block predates Cancun. Use
@@ -71,7 +78,7 @@ compatibility failure.
 
 ## Anvil: Pin the Local Node to the Exact Tx Prestate
 
-The typical remote approach `vm.createSelectFork("bsc", ATTACK_TX_HASH)`
+The typical remote approach `vm.createSelectFork("<net>", ATTACK_TX_HASH)`
 can fail with:
 
 ```
@@ -88,14 +95,7 @@ including** the target tx, leaving the local chain at the exact pre-state.
 Recommended startup:
 
 ```bash
-anvil \
-  --fork-url "$RPC_URL" \
-  --fork-transaction-hash <TX_HASH> \
-  --port 8546 \
-  --timeout 120000 \
-  --retries 20 \
-  --fork-retry-backoff 1000 \
-  --no-rate-limit
+python scripts/anvil_fork.py --network <NET> --tx <TX_HASH>
 ```
 
 Why each flag matters:
@@ -150,9 +150,17 @@ interface Vm {
     function expectRevert() external;
     function deal(address who, uint256 newBalance) external;
     function roll(uint256 newHeight) external;
+    function envString(string calldata key) external returns (string memory);
 }
 
 Vm internal constant vm = Vm(address(uint160(uint256(keccak256("hevm cheat code")))));
+```
+
+Read the remote fork alias from `REPLAY_NETWORK` for chain-agnostic tests:
+
+```solidity
+string memory network = vm.envString("REPLAY_NETWORK");
+vm.createSelectFork(network, ATTACK_BLOCK - 1);
 ```
 
 Do not import `forge-std`. Staying interface-only removes a remapping
