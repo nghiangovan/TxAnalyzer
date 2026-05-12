@@ -12,9 +12,9 @@ optimizer_runs = 200
 [rpc_endpoints]
 eth = "${ETH_RPC_URL}"
 bsc = "${BSC_RPC_URL}"
-arb = "${ARB_RPC_URL}"
+arb = "${ARBITRUM_RPC_URL}"
 base = "${BASE_RPC_URL}"
-op = "${OP_RPC_URL}"
+op = "${OPTIMISM_RPC_URL}"
 polygon = "${POLYGON_RPC_URL}"
 avax = "${AVAX_RPC_URL}"
 fantom = "${FTM_RPC_URL}"

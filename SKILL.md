@@ -31,7 +31,7 @@ pip install -r ${CLAUDE_SKILL_DIR}/requirements.txt
 
 4. **Foundry** (required for Fork Harness + Risk Upper Bound stages): `forge`, `anvil`, `cast` must be on `$PATH`. Install via `curl -L https://foundry.paradigm.xyz | bash && foundryup`.
 
-5. **Shell env** (required for Fork Harness): export the RPC env var for the target EVM network (for example `ETH_RPC_URL`, `BSC_RPC_URL`, `ARB_RPC_URL`, `BASE_RPC_URL`). Values should match `config.json`; `${ENV_VAR}` placeholders in config are resolved at runtime.
+5. **Shell env** (required for Fork Harness): export the RPC env var for the target EVM network (for example `ETH_RPC_URL`, `BSC_RPC_URL`, `ARBITRUM_RPC_URL`, `BASE_RPC_URL`). Values should match `config.json`; `${ENV_VAR}` placeholders in config are resolved at runtime.
 
 Supported networks: `bsc` (default), `eth`, `arb`, `base`, `op`, `polygon`, `avax`, `fantom`, `sepolia`, `polygon_amoy`, `solana`.
 
